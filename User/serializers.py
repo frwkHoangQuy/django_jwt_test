@@ -6,4 +6,4 @@ from User.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        fields = [field.name for field in model._meta.fields if field.name != 'password']
