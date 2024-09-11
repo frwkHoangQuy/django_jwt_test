@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'User',
     'rest_framework',
     'snippets',
-    'Middleware'
+    'Middleware',
+    'Pagination'
 ]
 
 AUTH_USER_MODEL = "User.User"

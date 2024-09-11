@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from Middleware.jwt_middleware import PermissionRequiredMixin
+from Pagination.PaginationHelper import PaginationHelper
 from .models import Snippet
 from .serializers import SnippetSerializer
 
@@ -53,6 +54,22 @@ class SnippetViewV2(PermissionRequiredMixin, APIView):
     def get(self, request):
         queryset = Snippet.objects.all()
         serializer = SnippetSerializer(queryset, many=True)
+
+        page = request.query_params.get("page")
+        page_size = request.query_params.get("page_size")
+
+        if page and page_size:
+            is_valid, error_message = PaginationHelper.validate_params(page_size, page)
+            if not is_valid:
+                return Response({"error": error_message}, status=status.HTTP_400_BAD_REQUEST)
+            page_size = int(page_size)
+            page = int(page)
+            paginator = PaginationHelper(serializer.data, page_size, page)
+            paginated_data = paginator.paginate()
+            if isinstance(paginated_data, Response):
+                return paginated_data
+            return Response(paginated_data, status=status.HTTP_200_OK)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
