@@ -1,3 +1,7 @@
+from io import BytesIO
+
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import serializers
 
 from User.serializers import UserSerializer
@@ -12,11 +16,34 @@ class SnippetSerializer(serializers.Serializer):
     language = serializers.ChoiceField(choices=LANGUAGE_CHOICES, default='python')
     style = serializers.ChoiceField(choices=STYLE_CHOICES, default='friendly')
     user = UserSerializer(read_only=True)
+    image = serializers.ImageField(required=False)
+    thumbnail = serializers.ImageField(read_only=True)
 
     def create(self, validated_data):
-        """
-        Create and return a new `Snippet` instance, given the validated data.
-        """
+        original_image = validated_data.get('image', None)
+
+        if original_image:
+            try:
+                size = (100, 100)
+                with Image.open(original_image) as img:
+                    img_resized = img.resize(size, Image.NEAREST)
+
+                    img_io = BytesIO()
+                    img_resized.save(img_io, format=img.format)
+                    img_io.seek(0)
+
+                    thumbnail_file = InMemoryUploadedFile(
+                        img_io,
+                        'ImageField',
+                        original_image.name,
+                        original_image.content_type,
+                        len(img_io.getvalue()),
+                        None
+                    )
+                    validated_data['thumbnail'] = thumbnail_file
+            except Exception as e:
+                raise serializers.ValidationError(f"Error processing image: {e}")
+
         request = self.context.get('request')
         return Snippet.objects.create(**validated_data, user=request.user)
 
@@ -29,5 +56,10 @@ class SnippetSerializer(serializers.Serializer):
         instance.linenos = validated_data.get('linenos', instance.linenos)
         instance.language = validated_data.get('language', instance.language)
         instance.style = validated_data.get('style', instance.style)
+
+        image = validated_data.get('image', None)
+        if image:
+            instance.image = image
+
         instance.save()
         return instance
