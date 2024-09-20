@@ -27,7 +27,6 @@ from UserTest.settings import MEDIA_URL, MEDIA_ROOT
 urlpatterns = [
                   path('', include('snippets.urls')),
                   path('', include('User.urls')),
-                  path('', include('Image.urls')),
                   path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
                   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
                   path('admin/', admin.site.urls),
