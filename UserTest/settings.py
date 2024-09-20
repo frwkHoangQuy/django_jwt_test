@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'snippets',
     'Middleware',
     'Pagination',
-    'Image'
 ]
 
 AUTH_USER_MODEL = "User.User"
